@@ -78,6 +78,16 @@
   .stat .n { font-family:'Orbitron',monospace; font-size:20px; font-weight:700; color:var(--accent-x); }
   .stat .l { font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; }
 
+  .io-btns { display:flex; flex-direction:column; gap:6px; margin-left:16px; }
+  .io-btn {
+    background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.25);
+    color:var(--accent-x); padding:6px 14px; border-radius:5px;
+    cursor:pointer; font-family:'Orbitron',monospace;
+    font-size:9px; letter-spacing:1px; transition:all .18s;
+    white-space:nowrap;
+  }
+  .io-btn:hover { background:rgba(0,212,255,.18); box-shadow:0 0 10px rgba(0,212,255,.2); }
+
   /* ── TABS ── */
   .tabs {
     position:relative; z-index:10;
@@ -247,9 +257,9 @@
 
   .card-top {
     display:flex; align-items:flex-start;
-    justify-content:space-between; margin-bottom:6px;
+    justify-content:flex-end; margin-bottom:4px;
   }
-  .badges { display:flex; flex-direction:column; gap:3px; align-items:flex-end; }
+  .badges { display:flex; flex-direction:row; flex-wrap:wrap; gap:3px; align-items:flex-start; justify-content:flex-end; margin-bottom:6px; }
   .badge {
     font-size:9px; padding:2px 6px; border-radius:3px;
     letter-spacing:.5px; font-family:'Orbitron',monospace;
@@ -392,6 +402,11 @@
     <div class="stat"><div class="n" id="s-owned">0</div><div class="l">Owned</div></div>
     <div class="stat"><div class="n" id="s-rare">0</div><div class="l">Rares</div></div>
     <div class="stat"><div class="n" id="s-pct">0%</div><div class="l">Complete</div></div>
+  </div>
+  <div class="io-btns">
+    <button class="io-btn" onclick="exportCollection()" title="Export collection to JSON file">⬇ EXPORT</button>
+    <button class="io-btn" onclick="document.getElementById('import-input').click()" title="Import collection from JSON file">⬆ IMPORT</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importCollection(event)">
   </div>
 </header>
 
@@ -594,9 +609,7 @@ const EMOJIS = { x:'🌀', burst:'💥', metal:'⚙️', original:'🌟', arenas
 const DEFAULTS = {
   x: [
     // ─── BX LINE — Standard ───
-    {id:'bx01', name:'DranSword 3-60F', code:'BX-01', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Attack-type Blade released. Debut at CoroCoro Tamashii Festival Jun 2023.'},
-    {id:'bx01h', name:'Sword Dran 3-60F', code:'BX-01 (Hasbro)', series:'BX · Starter', year:'2024', pub:'hasbro', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro western release name: Sword Dran.'},
-    {id:'bx02', name:'HellsScythe 4-60T', code:'BX-02', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-02_HellsScythe.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bx01', name:'DranSword 3-60F', code:'BX-01', series:'BX · Starter', year:'2023', pub:'both', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Sword Dran 3-60F. First Attack-type Blade released. Debut at CoroCoro Tamashii Festival Jun 2023.'},    {id:'bx02', name:'HellsScythe 4-60T', code:'BX-02', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-02_HellsScythe.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'bx03', name:'WizardArrow 4-80B', code:'BX-03', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-03_WizardArrow.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'bx04', name:'KnightShield 3-80N', code:'BX-04', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-04_KnightShield.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'bx13', name:'KnightLance 4-80HN', code:'BX-13', series:'BX · Booster', year:'2023', pub:'tt', img:'BX-13_KnightLance.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Aug 2023'},
@@ -604,9 +617,7 @@ const DEFAULTS = {
     {id:'bx15', name:'LeonClaw 5-60P', code:'BX-15', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-15_LeonClaw.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2023'},
     {id:'bx16r', name:'ViperTail 5-80O', code:'BX-16 RB Select', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-16_ViperTail.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from ViperTail Select. Oct 2023.'},
     {id:'bx19', name:'RhinoHorn 3-80S', code:'BX-19', series:'BX · Booster', year:'2023', pub:'tt', img:'BX-19_RhinoHorn.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2023'},
-    {id:'bx23', name:'PhoenixWing 9-60GF', code:'BX-23', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-23_PhoenixWing.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Dec 2023. Replaced DranSword as top Attack pick.'},
-    {id:'bx23h', name:'Soar Phoenix 9-60GF', code:'BX-23 (Hasbro)', series:'BX · Starter', year:'2024', pub:'hasbro', img:'BX-23_PhoenixWing.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro western name: Soar Phoenix.'},
-    {id:'bx24r', name:'WyvernGale 5-80GB', code:'BX-24 RB Vol.2', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-24_WyvernGale.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.2. Dec 2023.'},
+    {id:'bx23', name:'PhoenixWing 9-60GF', code:'BX-23', series:'BX · Starter', year:'2023', pub:'both', img:'BX-23_PhoenixWing.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Soar Phoenix 9-60GF. Dec 2023. Replaced DranSword as top Attack pick.'},    {id:'bx24r', name:'WyvernGale 5-80GB', code:'BX-24 RB Vol.2', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-24_WyvernGale.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.2. Dec 2023.'},
     {id:'bx26', name:'UnicornSting 5-60GP', code:'BX-26', series:'BX · Booster', year:'2024', pub:'tt', img:'BX-26_UnicornSting.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Jan 2024'},
     {id:'bx27r', name:'SphinxCowl 9-80GN', code:'BX-27 RB Select', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-27_SphinxCowl.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from SphinxCowl Select. Feb 2024.'},
     {id:'bx31r', name:'TyrannoBeat 4-70Q', code:'BX-31 RB Vol.3', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-31_TyrannoBeat.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.3. Apr 2024.'},
@@ -618,23 +629,26 @@ const DEFAULTS = {
     {id:'bx37', name:'BearScratch 5-60F', code:'BX-37 Double Xtreme Set', series:'BX · Set', year:'2024', pub:'tt', img:'BX-34_CobaltDragoon.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2024'},
     {id:'bx38', name:'CrimsonGaruda 4-70TP', code:'BX-38', series:'BX · Booster', year:'2024', pub:'tt', img:'BX-38_CrimsonGaruda.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024'},
     // ─── UX LINE ───
-    {id:'ux01', name:'DranBuster 1-60A', code:'UX-01', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-01_DranBuster.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First UX release. Mar 2024.'},
-    {id:'ux01h', name:'Buster Dran 1-60A', code:'UX-01 (Hasbro)', series:'UX · Starter', year:'2024', pub:'hasbro', img:'UX-01_DranBuster.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Buster Dran.'},
-    {id:'ux02', name:'HellsHammer 3-70H', code:'UX-02', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-02_HellsHammer.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
-    {id:'ux03', name:'WizardRod 5-70DB', code:'UX-03', series:'UX · Booster', year:'2024', pub:'tt', img:'UX-03_WizardRod.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024. Best stamina Blade at release.'},
-    {id:'ux03h', name:'Wand Wizard 5-70DB', code:'UX-03 (Hasbro)', series:'UX · Booster', year:'2025', pub:'hasbro', img:'UX-03_WizardRod.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Wand Wizard.'},
-    {id:'ux05r', name:'ShinobiShadow 1-80MN', code:'UX-05 RB Select', series:'UX · Random Booster', year:'2024', pub:'tt', img:'UX-05_ShinobiShadow.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from ShinobiShadow Select. May 2024.'},
+    {id:'ux01', name:'DranBuster 1-60A', code:'UX-01', series:'UX · Starter', year:'2024', pub:'both', img:'UX-01_DranBuster.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Buster Dran 1-60A. First UX release. Mar 2024.'},    {id:'ux02', name:'HellsHammer 3-70H', code:'UX-02', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-02_HellsHammer.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
+    {id:'ux03', name:'WizardRod 5-70DB', code:'UX-03', series:'UX · Booster', year:'2024', pub:'both', img:'UX-03_WizardRod.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Wand Wizard 5-70DB. Mar 2024. Best stamina Blade at release.'},    {id:'ux05r', name:'ShinobiShadow 1-80MN', code:'UX-05 RB Select', series:'UX · Random Booster', year:'2024', pub:'tt', img:'UX-05_ShinobiShadow.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from ShinobiShadow Select. May 2024.'},
     {id:'ux06', name:'LeonCrest 7-60GN', code:'UX-06', series:'UX · Booster', year:'2024', pub:'tt', img:'UX-06_LeonCrest.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Aug 2024'},
     {id:'ux08', name:'SilverWolf 3-80FB', code:'UX-08', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-08_SilverWolf.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2024'},
-    {id:'ux09', name:'SamuraiSaber 2-70L', code:'UX-09', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-09_SamuraiSaber.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024'},
-    {id:'ux09h', name:'Steel Samurai 4-80T', code:'UX-09 (Hasbro)', series:'UX · Booster', year:'2025', pub:'hasbro', img:'UX-09_SamuraiSaber.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro Wave 2025.'},
-    {id:'ux10', name:'KnightMail 3-85BS', code:'UX-10 Customize Set', series:'UX · Set', year:'2024', pub:'tt', img:'UX-10_KnightMail.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024 w/ PteraSwing'},
+    {id:'ux09', name:'SamuraiSaber 2-70L', code:'UX-09', series:'UX · Starter', year:'2024', pub:'both', img:'UX-09_SamuraiSaber.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Steel Samurai 4-80T. Nov 2024'},    {id:'ux10', name:'KnightMail 3-85BS', code:'UX-10 Customize Set', series:'UX · Set', year:'2024', pub:'tt', img:'UX-10_KnightMail.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024 w/ PteraSwing'},
     {id:'ux11', name:'ImpactDrake 9-60LR', code:'UX-11', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-11_ImpactDrake.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Dec 2024'},
     {id:'ux12r', name:'GhostCircle 0-80GB', code:'UX-12 RB Vol.5', series:'UX · Random Booster', year:'2024', pub:'tt', img:'UX-12_GhostCircle.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.5. Dec 2024.'},
+
+    // ─── CX LINE ───
+    {id:'cx01', name:'DranBrave S6-60V', code:'CX-01', series:'CX · Starter', year:'2025', pub:'tt', img:'CX-01_DranBrave.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Custom Line release. Mar 2025. Features Vortex Assist Blade system.'},
+    {id:'cx02', name:'WizardArc R4-55LO', code:'CX-02', series:'CX · Starter', year:'2025', pub:'tt', img:'CX-02_WizardArc.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2025. Round Low-Orb Bit.'},
+    {id:'cx03', name:'PerseusDark 6-80W', code:'CX-03', series:'CX · Booster', year:'2025', pub:'tt', img:'CX-03_PerseusDark.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2025. Bumper Balance type.'},
+    {id:'cx05', name:'HellsReaper 4-70K', code:'CX-05', series:'CX · Booster', year:'2025', pub:'tt', img:'CX-05_HellsReaper.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Apr 2025.'},
+    {id:'cx06', name:'FoxBrush', code:'CX-06', series:'CX · Booster', year:'2025', pub:'tt', img:'CX-06_FoxBrush.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'May 2025.'},
+    {id:'cx07', name:'PegasusBlast 5-80T', code:'CX-07', series:'CX · Booster', year:'2025', pub:'tt', img:'CX-07_PegasusBlast.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Aug 2025.'},
+    {id:'cx00_vv', name:'ValkyrieVolt S4-70V Metal Coat: Gold', code:'CX-00', series:'CX · Exclusive', year:'2025', pub:'tt', img:'CX-00_ValkyrieVolt.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Digital game exclusive. Added Aug 2025.'},
     // ─── Hasbro-exclusive / Wave items ───
-    {id:'hbx_gw', name:'GaleWyvern 3-60T', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-24_WyvernGale.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Wave release.'},
-    {id:'hbx_sd', name:'Sword Dran 3-80B', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Wave. Dual Pack with Gale Wyvern.'},
-    {id:'hbx_ks', name:'KnifeShinobi 4-80HN', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'UX-05_ShinobiShadow.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Dual Pack.'},
+    {id:'hbx_gw', name:'GaleWyvern 3-60T', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-24_WyvernGale.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro-exclusive western name. Hasbro 2025 Wave release.'},
+    {id:'hbx_sd', name:'Sword Dran 3-80B', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro-exclusive western name. Hasbro 2025 Wave. Dual Pack with Gale Wyvern.'},
+    {id:'hbx_ks', name:'KnifeShinobi 4-80HN', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'UX-05_ShinobiShadow.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro-exclusive western name. Hasbro 2025 Dual Pack.'},
     // ─── Rare / Exclusives ───
     {id:'bxg01', name:'DranzerSpiral 3-80T', code:'BXG-01', series:'BX · Exclusive Booster', year:'2023', pub:'tt', img:'BXG-01_DranzerSpiral.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Exclusive Booster. Jul 2023 launch event.'},
     {id:'bxg04', name:'DrigerSlash 4-80P', code:'BXG-04', series:'BX · Exclusive Booster', year:'2024', pub:'tt', img:'BXG-04_DrigerSlash.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Exclusive. Apr 2024.'},
@@ -660,17 +674,17 @@ const DEFAULTS = {
     {id:'xone_1', name:'ShinobiKnife 4-60LF Metal Coat: Blue', code:'XONE Game Exclusive', series:'BX · Video Game Exclusive', year:'2024', pub:'tt', img:'UX-05_ShinobiShadow.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Beyblade X XONE video game exclusive. Nov 2024.'},
   ],
   burst: [
-    {id:'bb01', name:'Valkyrie 6 Variable', code:'B-00', series:'Burst', year:'2015', pub:'tt', img:'Burst_Valkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Burst release.'},
-    {id:'bb02', name:'Valtryek V2 6V145', code:'B-60', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_UltimateValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
-    {id:'bb03', name:'Spriggan Requiem 0 Zeta', code:'B-100', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_BraveValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Fan favourite Stamina/Balance'},
-    {id:'bb04', name:'Cho-Z Achilles 00 Dimension', code:'B-127', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_ZestAchilles.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
-    {id:'bb05', name:'Winning Valkyrie 12 Volcanic', code:'B-104', series:'Burst Turbo', year:'2018', pub:'tt', img:'Burst_UltimateValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
-    {id:'bb06', name:'Zillion Zeutron I.W.', code:'B-59', series:'Burst', year:'2016', pub:'tt', img:'Burst_DynamiteBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Stamina Starter'},
+    {id:'bb01', name:'Valkyrie 6 Variable', code:'B-00', series:'Burst', year:'2015', pub:'tt', img:'Burst_ValkyrieFamilies.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Burst release.'},
+    {id:'bb02', name:'Valtryek V2 6V145', code:'B-60', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_ValkyrieFamilies.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb03', name:'Spriggan Requiem 0 Zeta', code:'B-100', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_ZweiLonginus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Fan favourite Stamina/Balance'},
+    {id:'bb04', name:'Cho-Z Achilles 00 Dimension', code:'B-127', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_HyperionHelios.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb05', name:'Winning Valkyrie 12 Volcanic', code:'B-104', series:'Burst Turbo', year:'2018', pub:'tt', img:'Burst_ValkyrieFamilies.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb06', name:'Zillion Zeutron I.W.', code:'B-59', series:'Burst', year:'2016', pub:'tt', img:'Burst_GeistFafnir.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Stamina Starter'},
     {id:'bb07', name:'Master Diabolos Generate', code:'B-155', series:'Burst GT', year:'2019', pub:'tt', img:'Burst_DivineBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
-    {id:'bb08', name:'Brave Valkyrie Evolution', code:'B-186', series:'Burst Dynamite Battle', year:'2021', pub:'tt', img:'Burst_BraveValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb08', name:'Brave Valkyrie Evolution', code:'B-186', series:'Burst Dynamite Battle', year:'2021', pub:'tt', img:'Burst_JetWyvern.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'bb09', name:'Astral Spriggan Over Quattro', code:'B-195', series:'Burst QuadDrive', year:'2022', pub:'tt', img:'Burst_AstralSpriggan2.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'bb10', name:'Hells Salamander Over Quattro', code:'B-199', series:'Burst QuadStrike', year:'2023', pub:'tt', img:'Burst_DivineBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Final Burst series release.'},
-    {id:'bb11', name:'Xcalius X2 Magnum Impact', code:'B-62', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_ZestAchilles.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro only'},
+    {id:'bb11', name:'Xcalius X2 Magnum Impact', code:'B-62', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_HyperionHelios.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro only'},
     {id:'bb12', name:'Death Quetzalcoatl 125RDF', code:'B-Special', series:'Burst / Metal cross', year:'2017', pub:'tt', img:'Burst_GatlingDragon.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare crossover design'},
   ],
   metal: [
@@ -702,7 +716,7 @@ const DEFAULTS = {
     {id:'ar01h', name:'Xtreme Stadium (Hasbro)', code:'BX-10 (Hasbro)', series:'Beyblade X', year:'2024', pub:'hasbro', img:'Arena_XtremeStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Same design, Hasbro western release.'},
     {id:'ar02', name:'Wide Xtreme Stadium', code:'BX-32', series:'Beyblade X', year:'2024', pub:'tt', img:'BX-46_InfinityStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Wider arena for more intense battles. Jul 2024.'},
     {id:'ar03', name:'Double Xtreme Stadium Set', code:'BX-37', series:'Beyblade X', year:'2024', pub:'tt', img:'BX-46_InfinityStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Includes BearScratch 5-60F. Oct 2024.'},
-    {id:'ar04', name:'BeyStadium Burst Standard', code:'B-117', series:'Burst', year:'2018', pub:'tt', img:'Burst_DynamiteBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'ar04', name:'BeyStadium Burst Standard', code:'B-117', series:'Burst', year:'2018', pub:'tt', img:'Burst_Stadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'ar05', name:'BeyStadium GT', code:'B-149', series:'Burst GT', year:'2019', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'ar06', name:'Big Bang Pegasus Stadium', code:'BB-106', series:'Metal Fury', year:'2011', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
     {id:'ar07', name:'Zero-G Stadium', code:'BBG-21', series:'Shogun Steel', year:'2012', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rotating gimmick arena.'},
@@ -748,7 +762,7 @@ function badges(it) {
   if(it.ltd) h+='<span class="badge ltd">LIMITED</span>';
   if(it.pub==='hasbro') h+='<span class="badge hasbro">HASBRO</span>';
   else if(it.pub==='tt') h+='<span class="badge tt">TT</span>';
-  else h+='<span class="badge tt">TT</span><span class="badge hasbro">HASBRO</span>';
+  else { h+='<span class="badge tt">TT</span><span class="badge hasbro">HASBRO</span>'; }
   return h;
 }
 
@@ -786,10 +800,7 @@ function render(sec) {
     <div class="card ${it.owned?'owned':''} ${it.rare?'rare-item':''}" id="c-${it.id}">
       <button class="del-btn" onclick="delItem('${sec}','${it.id}',event)">✕</button>
       ${cardImg(it,sec)}
-      <div class="card-top">
-        <div style="flex:1;min-width:0"></div>
-        <div class="badges">${badges(it)}</div>
-      </div>
+      <div class="badges">${badges(it)}</div>
       <div class="cname">${it.name}</div>
       <div class="ccode">${it.code||'—'}</div>
       <div class="cmeta">
@@ -882,6 +893,63 @@ function si() {
   data[modalSection].push(item); save(); render(modalSection); cm();
 }
 document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)cm();});
+
+// ============================================================
+// IMPORT / EXPORT
+// ============================================================
+function exportCollection() {
+  const payload = {
+    version: 1,
+    exported: new Date().toISOString(),
+    data: data
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'beyblade-collection-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCollection(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const incoming = parsed.data || parsed;
+      // Validate it looks like our data structure
+      const validKeys = ['x','burst','metal','original','arenas','launchers'];
+      const hasValid = validKeys.some(k => Array.isArray(incoming[k]));
+      if (!hasValid) { alert('Invalid collection file. Please export from this tracker first.'); return; }
+      // Merge: preserve existing owned/notes, add new items
+      if (!confirm('Import will merge with your current collection. Existing ownership marks are preserved. Continue?')) return;
+      validKeys.forEach(sec => {
+        if (!incoming[sec]) return;
+        if (!data[sec]) data[sec] = [];
+        const existingIds = new Set(data[sec].map(i => i.id));
+        incoming[sec].forEach(item => {
+          if (existingIds.has(item.id)) {
+            // Update owned/notes from import, keep rest
+            const local = data[sec].find(i => i.id === item.id);
+            if (local) { local.owned = item.owned; if (item.notes) local.notes = item.notes; }
+          } else {
+            data[sec].push(item);
+          }
+        });
+      });
+      save();
+      renderAll();
+      alert('Collection imported successfully!');
+    } catch(err) {
+      alert('Error reading file: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
 
 // ============================================================
 // INIT
