@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beyblade Collection Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06080f;
+    --bg2: #0b0f1c;
+    --bg3: #0f1524;
+    --card: #0d1420;
+    --border: #1a2840;
+    --accent-x: #00d4ff;
+    --accent-burst: #ff6b35;
+    --accent-metal: #d4a84b;
+    --accent-original: #8b5cf6;
+    --accent-rare: #ffd700;
+    --text: #dde8f8;
+    --text-dim: #4a6080;
+    --green: #22c55e;
+    --red: #ef4444;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 10%, rgba(0,212,255,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 85%, rgba(255,107,53,0.04) 0%, transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position:relative; z-index:10;
+    padding:20px 28px 18px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:18px;
+    background:linear-gradient(180deg,rgba(0,212,255,0.05) 0%,transparent 100%);
+  }
+
+  .logo {
+    width:48px; height:48px;
+    border:2.5px solid var(--accent-x);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace;
+    font-size:17px; font-weight:900;
+    color:var(--accent-x);
+    box-shadow:0 0 18px rgba(0,212,255,0.35), inset 0 0 10px rgba(0,212,255,0.08);
+    animation:spin 10s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .header-text h1 {
+    font-family:'Orbitron',monospace;
+    font-size:20px; font-weight:900;
+    letter-spacing:3px; color:var(--accent-x);
+    text-shadow:0 0 16px rgba(0,212,255,0.4);
+  }
+  .header-text p { color:var(--text-dim); font-size:12px; letter-spacing:1px; margin-top:2px; }
+
+  .hdr-stats { margin-left:auto; display:flex; gap:22px; }
+  .stat { text-align:center; }
+  .stat .n { font-family:'Orbitron',monospace; font-size:20px; font-weight:700; color:var(--accent-x); }
+  .stat .l { font-size:10px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; }
+
+  /* ── TABS ── */
+  .tabs {
+    position:relative; z-index:10;
+    display:flex; border-bottom:1px solid var(--border);
+    overflow-x:auto;
+  }
+  .tab {
+    background:none; border:none;
+    color:var(--text-dim);
+    padding:13px 20px;
+    font-family:'Orbitron',monospace;
+    font-size:10px; letter-spacing:1.5px;
+    cursor:pointer; transition:all .2s;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  .tab:hover { color:var(--text); }
+  .tab.ax { color:var(--accent-x); border-bottom-color:var(--accent-x); background:rgba(0,212,255,0.04); }
+  .tab.ab { color:var(--accent-burst); border-bottom-color:var(--accent-burst); background:rgba(255,107,53,0.04); }
+  .tab.am { color:var(--accent-metal); border-bottom-color:var(--accent-metal); background:rgba(212,168,75,0.04); }
+  .tab.ao { color:var(--accent-original); border-bottom-color:var(--accent-original); background:rgba(139,92,246,0.04); }
+  .tab.aa { color:#06d6a0; border-bottom-color:#06d6a0; background:rgba(6,214,160,0.04); }
+  .tab.al { color:#f72585; border-bottom-color:#f72585; background:rgba(247,37,133,0.04); }
+
+  /* ── MAIN ── */
+  main { position:relative; z-index:5; padding:22px 24px; max-width:1500px; margin:0 auto; }
+  .panel { display:none; }
+  .panel.on { display:block; }
+
+  /* ── GEN BANNER ── */
+  .gbanner {
+    display:flex; align-items:center; gap:14px;
+    padding:12px 16px; border-radius:8px;
+    border:1px solid; margin-bottom:18px;
+  }
+  .gbanner.gx { background:rgba(0,212,255,0.04); border-color:rgba(0,212,255,0.18); }
+  .gbanner.gb { background:rgba(255,107,53,0.04); border-color:rgba(255,107,53,0.18); }
+  .gbanner.gm { background:rgba(212,168,75,0.04); border-color:rgba(212,168,75,0.18); }
+  .gbanner.go { background:rgba(139,92,246,0.04); border-color:rgba(139,92,246,0.18); }
+  .gbanner.ga { background:rgba(6,214,160,0.04); border-color:rgba(6,214,160,0.18); }
+  .gbanner.gl { background:rgba(247,37,133,0.04); border-color:rgba(247,37,133,0.18); }
+
+  .gtitle { font-family:'Orbitron',monospace; font-size:13px; font-weight:700; }
+  .gx .gtitle { color:var(--accent-x); }
+  .gb .gtitle { color:var(--accent-burst); }
+  .gm .gtitle { color:var(--accent-metal); }
+  .go .gtitle { color:var(--accent-original); }
+  .ga .gtitle { color:#06d6a0; }
+  .gl .gtitle { color:#f72585; }
+
+  .gdesc { font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .gprog { margin-left:auto; min-width:130px; text-align:right; }
+  .pbar { background:var(--bg3); border-radius:3px; height:5px; margin-bottom:4px; overflow:hidden; }
+  .pfill { height:100%; border-radius:3px; transition:width .4s ease; }
+  .ptxt { font-size:11px; color:var(--text-dim); }
+
+  /* ── FILTER BAR ── */
+  .fbar {
+    display:flex; gap:10px; margin-bottom:16px;
+    flex-wrap:wrap; align-items:center;
+  }
+  .fbar input {
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); padding:8px 14px;
+    border-radius:6px; font-family:'Rajdhani',sans-serif;
+    font-size:14px; width:220px; transition:border-color .2s;
+  }
+  .fbar input:focus { outline:none; border-color:var(--accent-x); }
+  .fbtn {
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text-dim); padding:8px 14px;
+    border-radius:6px; cursor:pointer;
+    font-family:'Rajdhani',sans-serif;
+    font-size:13px; transition:all .2s; letter-spacing:.3px;
+  }
+  .fbtn:hover { color:var(--text); border-color:#2a3c58; }
+  .fbtn.rare.on { background:rgba(255,215,0,.12); border-color:var(--accent-rare); color:var(--accent-rare); }
+  .fbtn.owned.on { background:rgba(34,197,94,.12); border-color:var(--green); color:var(--green); }
+  .fbtn.hasbro.on { background:rgba(247,37,133,.12); border-color:#f72585; color:#f72585; }
+  .add-btn {
+    margin-left:auto;
+    background:rgba(0,212,255,.08);
+    border:1px solid var(--accent-x);
+    color:var(--accent-x); padding:8px 18px;
+    border-radius:6px; cursor:pointer;
+    font-family:'Orbitron',monospace;
+    font-size:10px; letter-spacing:1px;
+    transition:all .2s;
+  }
+  .add-btn:hover { background:rgba(0,212,255,.16); }
+
+  /* ── SUB-SECTION ── */
+  .sub-hdr {
+    display:flex; align-items:center; gap:10px;
+    margin:20px 0 12px;
+  }
+  .sub-hdr h3 {
+    font-family:'Orbitron',monospace;
+    font-size:11px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--text-dim);
+  }
+  .sub-hdr .cnt {
+    background:var(--border); border-radius:3px;
+    padding:1px 7px; font-size:11px; color:var(--text-dim);
+  }
+  .rare-divider {
+    display:flex; align-items:center; gap:10px;
+    margin:20px 0 12px;
+  }
+  .rare-divider span {
+    font-family:'Orbitron',monospace;
+    font-size:10px; color:var(--accent-rare);
+    letter-spacing:2px; white-space:nowrap;
+  }
+  .rare-divider::before, .rare-divider::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,215,0,.25),transparent);
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(185px,1fr));
+    gap:10px; margin-bottom:24px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:9px; padding:12px;
+    cursor:default; transition:all .18s;
+    position:relative; overflow:hidden;
+  }
+  .card:hover { transform:translateY(-2px); border-color:#253550; }
+  .card.owned { border-color:rgba(34,197,94,.35); }
+  .card.owned::after {
+    content:''; position:absolute; inset:0;
+    background:rgba(34,197,94,.03); pointer-events:none;
+  }
+  .card.rare-item { border-color:rgba(255,215,0,.4); }
+  .card.rare-item::before {
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent-rare),transparent);
+  }
+
+  /* card image */
+  .card-img {
+    width:100%; height:100px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px; border-radius:6px;
+    background:var(--bg3);
+    overflow:hidden; position:relative;
+  }
+  .card-img img {
+    max-width:100%; max-height:96px;
+    object-fit:contain;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.6));
+    transition:transform .2s;
+  }
+  .card:hover .card-img img { transform:scale(1.05); }
+  .card-img .no-img {
+    font-size:36px;
+    opacity:.35;
+  }
+
+  .card-top {
+    display:flex; align-items:flex-start;
+    justify-content:space-between; margin-bottom:6px;
+  }
+  .badges { display:flex; flex-direction:column; gap:3px; align-items:flex-end; }
+  .badge {
+    font-size:9px; padding:2px 6px; border-radius:3px;
+    letter-spacing:.5px; font-family:'Orbitron',monospace;
+    white-space:nowrap;
+  }
+  .badge.rare { background:rgba(255,215,0,.12); color:var(--accent-rare); border:1px solid rgba(255,215,0,.25); }
+  .badge.excl { background:rgba(247,37,133,.12); color:#f72585; border:1px solid rgba(247,37,133,.25); }
+  .badge.tourn { background:rgba(139,92,246,.12); color:#a78bfa; border:1px solid rgba(139,92,246,.25); }
+  .badge.ltd { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
+  .badge.mc { background:rgba(212,168,75,.12); color:var(--accent-metal); border:1px solid rgba(212,168,75,.25); }
+  .badge.hasbro { background:rgba(247,37,133,.08); color:#f72585; border:1px solid rgba(247,37,133,.2); }
+  .badge.tt { background:rgba(0,212,255,.08); color:var(--accent-x); border:1px solid rgba(0,212,255,.2); }
+
+  .cname {
+    font-family:'Orbitron',monospace;
+    font-size:11px; font-weight:700;
+    color:var(--text); line-height:1.3;
+    margin-bottom:2px;
+  }
+  .ccode { font-size:11px; color:var(--text-dim); margin-bottom:5px; letter-spacing:.3px; }
+  .cmeta { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+  .mtag {
+    font-size:10px; padding:1px 6px;
+    background:var(--bg3); border-radius:3px;
+    color:var(--text-dim);
+  }
+  .cnotes {
+    font-size:11px; color:var(--text-dim);
+    margin-bottom:8px; line-height:1.4;
+  }
+
+  .own-btn {
+    width:100%; padding:6px; border-radius:5px;
+    border:none; cursor:pointer;
+    font-family:'Rajdhani',sans-serif;
+    font-size:13px; font-weight:600;
+    letter-spacing:.3px; transition:all .18s;
+  }
+  .own-btn.no {
+    background:var(--bg3); color:var(--text-dim);
+    border:1px solid var(--border);
+  }
+  .own-btn.no:hover { background:rgba(34,197,94,.08); border-color:var(--green); color:var(--green); }
+  .own-btn.yes { background:rgba(34,197,94,.12); color:var(--green); border:1px solid rgba(34,197,94,.25); }
+
+  .del-btn {
+    position:absolute; top:7px; right:7px;
+    background:none; border:none;
+    color:var(--text-dim); font-size:12px;
+    cursor:pointer; opacity:0; transition:opacity .15s;
+    padding:2px 4px;
+  }
+  .card:hover .del-btn { opacity:1; }
+  .del-btn:hover { color:var(--red); }
+
+  /* ── EMPTY ── */
+  .empty { text-align:center; padding:44px 20px; color:var(--text-dim); grid-column:1/-1; }
+  .empty .ico { font-size:44px; margin-bottom:10px; }
+
+  /* ── MODAL ── */
+  .overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.78); z-index:200;
+    align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .overlay.open { display:flex; }
+  .modal {
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:12px; padding:26px;
+    width:470px; max-width:95vw;
+    max-height:90vh; overflow-y:auto;
+    position:relative;
+  }
+  .modal h3 {
+    font-family:'Orbitron',monospace;
+    font-size:13px; color:var(--accent-x);
+    margin-bottom:18px; letter-spacing:2px;
+  }
+  .modal label {
+    display:block; font-size:11px;
+    color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:1px; margin-bottom:5px; margin-top:12px;
+  }
+  .modal input, .modal select, .modal textarea {
+    width:100%;
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--text); padding:8px 11px;
+    border-radius:6px; font-family:'Rajdhani',sans-serif;
+    font-size:14px; transition:border-color .2s;
+  }
+  .modal input:focus, .modal select:focus, .modal textarea:focus {
+    outline:none; border-color:var(--accent-x);
+  }
+  .modal select option { background:var(--bg2); }
+  .chk-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:5px; }
+  .chk { display:flex; align-items:center; gap:5px; cursor:pointer; font-size:13px; }
+  .chk input { width:auto; }
+  .modal-btns { display:flex; gap:8px; margin-top:20px; }
+  .modal-btns button {
+    flex:1; padding:10px; border-radius:6px;
+    border:none; cursor:pointer;
+    font-family:'Orbitron',monospace;
+    font-size:10px; letter-spacing:1px; transition:all .2s;
+  }
+  .btn-save { background:rgba(0,212,255,.12); color:var(--accent-x); border:1px solid var(--accent-x) !important; }
+  .btn-save:hover { background:rgba(0,212,255,.22); }
+  .btn-cancel { background:var(--bg3); color:var(--text-dim); border:1px solid var(--border) !important; }
+  .mclose { position:absolute; top:14px; right:14px; background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; }
+
+  /* ── DISCLAIMER ── */
+  footer {
+    position:relative; z-index:5;
+    border-top:1px solid var(--border);
+    padding:18px 28px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11px;
+    line-height:1.7;
+    margin-top:40px;
+  }
+  footer a { color:var(--text-dim); text-decoration:underline; }
+
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:var(--bg2); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">X</div>
+  <div class="header-text">
+    <h1>BEYBLADE TRACKER</h1>
+    <p>COLLECTION MANAGEMENT SYSTEM · TAKARA TOMY &amp; HASBRO</p>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat"><div class="n" id="s-total">0</div><div class="l">Total</div></div>
+    <div class="stat"><div class="n" id="s-owned">0</div><div class="l">Owned</div></div>
+    <div class="stat"><div class="n" id="s-rare">0</div><div class="l">Rares</div></div>
+    <div class="stat"><div class="n" id="s-pct">0%</div><div class="l">Complete</div></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab ax" onclick="sw('x')" id="tab-x">BEYBLADE X</button>
+  <button class="tab" onclick="sw('burst')" id="tab-burst">BURST</button>
+  <button class="tab" onclick="sw('metal')" id="tab-metal">METAL SAGA</button>
+  <button class="tab" onclick="sw('original')" id="tab-original">ORIGINAL</button>
+  <button class="tab" onclick="sw('arenas')" id="tab-arenas">ARENAS</button>
+  <button class="tab" onclick="sw('launchers')" id="tab-launchers">LAUNCHERS</button>
+</nav>
+
+<main>
+
+<!-- BEYBLADE X -->
+<div id="panel-x" class="panel on">
+  <div class="gbanner gx">
+    <div>
+      <div class="gtitle">BEYBLADE X — 4TH GENERATION</div>
+      <div class="gdesc">July 2023 (Takara Tomy Japan) · Summer 2024 (Hasbro Western) · BX / UX / CX Lines · X-Celerator Gear System</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-x" style="background:var(--accent-x);width:0%"></div></div>
+      <div class="ptxt" id="pt-x">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-x" placeholder="Search name, code, series…" oninput="render('x')">
+    <button class="fbtn rare" id="f-rare-x" onclick="tf('rare','x')">★ Rares Only</button>
+    <button class="fbtn owned" id="f-owned-x" onclick="tf('owned','x')">✓ Owned Only</button>
+    <button class="fbtn hasbro" id="f-hasbro-x" onclick="tf('hasbro','x')">🌍 Hasbro Only</button>
+    <button class="add-btn" onclick="om('x')">+ ADD</button>
+  </div>
+  <div id="grid-x" class="grid"></div>
+</div>
+
+<!-- BURST -->
+<div id="panel-burst" class="panel">
+  <div class="gbanner gb">
+    <div>
+      <div class="gtitle">BEYBLADE BURST — 3RD GENERATION</div>
+      <div class="gdesc">2015–2023 · Burst / Evolution / Turbo / Rise / Surge / QuadDrive / QuadStrike · GT &amp; DB Lines</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-burst" style="background:var(--accent-burst);width:0%"></div></div>
+      <div class="ptxt" id="pt-burst">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-burst" placeholder="Search name, code, series…" oninput="render('burst')">
+    <button class="fbtn rare" id="f-rare-burst" onclick="tf('rare','burst')">★ Rares Only</button>
+    <button class="fbtn owned" id="f-owned-burst" onclick="tf('owned','burst')">✓ Owned Only</button>
+    <button class="add-btn" style="border-color:var(--accent-burst);color:var(--accent-burst);background:rgba(255,107,53,.08)" onclick="om('burst')">+ ADD</button>
+  </div>
+  <div id="grid-burst" class="grid"></div>
+</div>
+
+<!-- METAL SAGA -->
+<div id="panel-metal" class="panel">
+  <div class="gbanner gm">
+    <div>
+      <div class="gtitle">METAL SAGA — 2ND GENERATION</div>
+      <div class="gdesc">2008–2013 · Metal Fusion / Metal Masters / Metal Fury / Shogun Steel (Zero-G)</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-metal" style="background:var(--accent-metal);width:0%"></div></div>
+      <div class="ptxt" id="pt-metal">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-metal" placeholder="Search name, code, series…" oninput="render('metal')">
+    <button class="fbtn rare" id="f-rare-metal" onclick="tf('rare','metal')">★ Rares Only</button>
+    <button class="fbtn owned" id="f-owned-metal" onclick="tf('owned','metal')">✓ Owned Only</button>
+    <button class="add-btn" style="border-color:var(--accent-metal);color:var(--accent-metal);background:rgba(212,168,75,.08)" onclick="om('metal')">+ ADD</button>
+  </div>
+  <div id="grid-metal" class="grid"></div>
+</div>
+
+<!-- ORIGINAL -->
+<div id="panel-original" class="panel">
+  <div class="gbanner go">
+    <div>
+      <div class="gtitle">ORIGINAL SERIES — 1ST GENERATION</div>
+      <div class="gdesc">1999–2004 · Beyblade / V-Force / G-Revolution · Bakuten Shoot</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-original" style="background:var(--accent-original);width:0%"></div></div>
+      <div class="ptxt" id="pt-original">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-original" placeholder="Search name, code, series…" oninput="render('original')">
+    <button class="fbtn rare" id="f-rare-original" onclick="tf('rare','original')">★ Rares Only</button>
+    <button class="fbtn owned" id="f-owned-original" onclick="tf('owned','original')">✓ Owned Only</button>
+    <button class="add-btn" style="border-color:var(--accent-original);color:var(--accent-original);background:rgba(139,92,246,.08)" onclick="om('original')">+ ADD</button>
+  </div>
+  <div id="grid-original" class="grid"></div>
+</div>
+
+<!-- ARENAS -->
+<div id="panel-arenas" class="panel">
+  <div class="gbanner ga">
+    <div>
+      <div class="gtitle">BEYSTADIUMS — ARENAS</div>
+      <div class="gdesc">All generations · Xtreme / Attack / Stamina / Wide / Double Xtreme</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-arenas" style="background:#06d6a0;width:0%"></div></div>
+      <div class="ptxt" id="pt-arenas">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-arenas" placeholder="Search…" oninput="render('arenas')">
+    <button class="fbtn owned" id="f-owned-arenas" onclick="tf('owned','arenas')">✓ Owned Only</button>
+    <button class="add-btn" style="border-color:#06d6a0;color:#06d6a0;background:rgba(6,214,160,.08)" onclick="om('arenas')">+ ADD</button>
+  </div>
+  <div id="grid-arenas" class="grid"></div>
+</div>
+
+<!-- LAUNCHERS -->
+<div id="panel-launchers" class="panel">
+  <div class="gbanner gl">
+    <div>
+      <div class="gtitle">LAUNCHERS &amp; ACCESSORIES</div>
+      <div class="gdesc">String / Rip-Cord / Custom Grip / Winder · All generations</div>
+    </div>
+    <div class="gprog">
+      <div class="pbar"><div class="pfill" id="p-launchers" style="background:#f72585;width:0%"></div></div>
+      <div class="ptxt" id="pt-launchers">0 / 0</div>
+    </div>
+  </div>
+  <div class="fbar">
+    <input id="q-launchers" placeholder="Search…" oninput="render('launchers')">
+    <button class="fbtn owned" id="f-owned-launchers" onclick="tf('owned','launchers')">✓ Owned Only</button>
+    <button class="add-btn" style="border-color:#f72585;color:#f72585;background:rgba(247,37,133,.08)" onclick="om('launchers')">+ ADD</button>
+  </div>
+  <div id="grid-launchers" class="grid"></div>
+</div>
+
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="mclose" onclick="cm()">✕</button>
+    <h3 id="m-title">ADD ITEM</h3>
+    <label>Name</label>
+    <input id="m-name" placeholder="e.g. DranSword 3-60F">
+    <label>Code / Reference</label>
+    <input id="m-code" placeholder="e.g. BX-01">
+    <label>Series / Sub-series</label>
+    <input id="m-series" placeholder="e.g. Beyblade X BX / Burst Sparking">
+    <label>Year</label>
+    <input id="m-year" placeholder="e.g. 2023">
+    <label>Publisher</label>
+    <select id="m-pub">
+      <option value="tt">Takara Tomy (Japan)</option>
+      <option value="hasbro">Hasbro (Western)</option>
+      <option value="both">Both</option>
+    </select>
+    <label>Image filename (place in imgs/ folder)</label>
+    <input id="m-img" placeholder="e.g. BX-01_DranSword.png">
+    <label>Tags</label>
+    <div class="chk-row">
+      <label class="chk"><input type="checkbox" id="m-rare"> <span style="color:var(--accent-rare)">Rare</span></label>
+      <label class="chk"><input type="checkbox" id="m-excl"> <span style="color:#f72585">Exclusive</span></label>
+      <label class="chk"><input type="checkbox" id="m-tourn"> <span style="color:#a78bfa">Tournament Prize</span></label>
+      <label class="chk"><input type="checkbox" id="m-ltd"> <span style="color:#fb923c">Limited Edition</span></label>
+      <label class="chk"><input type="checkbox" id="m-mc"> <span style="color:var(--accent-metal)">Metal Coat</span></label>
+    </div>
+    <label>Notes</label>
+    <textarea id="m-notes" rows="2" placeholder="Condition, source, notes…"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px">
+      <input type="checkbox" id="m-owned"> <span>Mark as owned</span>
+    </label>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cm()">CANCEL</button>
+      <button class="btn-save" onclick="si()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- DISCLAIMER FOOTER -->
+<footer>
+  <strong>FAN-MADE COLLECTION TRACKER — NOT AFFILIATED WITH TAKARA TOMY, HASBRO, OR THE BEYBLADE FRANCHISE</strong><br>
+  BEYBLADE, BEYBLADE X, BEYBLADE BURST and all related names, logos, characters, and imagery are trademarks and/or copyrights of Takara Tomy Co., Ltd. and Hasbro, Inc. All rights reserved by their respective owners.<br>
+  This is an unofficial fan project created for personal collection management purposes only. No copyright infringement is intended.<br>
+  Product images, if present, are used under fair use for identification purposes. This tracker has no commercial purpose.
+</footer>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const IMG = (file) => file ? `imgs/${file}` : null;
+const WIKI_IMG = (name) => `https://static.wikia.nocookie.net/beyblade/images/thumb/${name}/200px-${name}`;
+
+const EMOJIS = { x:'🌀', burst:'💥', metal:'⚙️', original:'🌟', arenas:'🏟️', launchers:'🚀' };
+
+const DEFAULTS = {
+  x: [
+    // ─── BX LINE — Standard ───
+    {id:'bx01', name:'DranSword 3-60F', code:'BX-01', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Attack-type Blade released. Debut at CoroCoro Tamashii Festival Jun 2023.'},
+    {id:'bx01h', name:'Sword Dran 3-60F', code:'BX-01 (Hasbro)', series:'BX · Starter', year:'2024', pub:'hasbro', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro western release name: Sword Dran.'},
+    {id:'bx02', name:'HellsScythe 4-60T', code:'BX-02', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-02_HellsScythe.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bx03', name:'WizardArrow 4-80B', code:'BX-03', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-03_WizardArrow.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bx04', name:'KnightShield 3-80N', code:'BX-04', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-04_KnightShield.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bx13', name:'KnightLance 4-80HN', code:'BX-13', series:'BX · Booster', year:'2023', pub:'tt', img:'BX-13_KnightLance.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Aug 2023'},
+    {id:'bx14r', name:'SharkEdge 3-60LF', code:'BX-14 RB Vol.1', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-14_SharkEdge.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare pull from Random Booster Vol.1. Sep 2023.'},
+    {id:'bx15', name:'LeonClaw 5-60P', code:'BX-15', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-15_LeonClaw.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2023'},
+    {id:'bx16r', name:'ViperTail 5-80O', code:'BX-16 RB Select', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-16_ViperTail.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from ViperTail Select. Oct 2023.'},
+    {id:'bx19', name:'RhinoHorn 3-80S', code:'BX-19', series:'BX · Booster', year:'2023', pub:'tt', img:'BX-19_RhinoHorn.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2023'},
+    {id:'bx23', name:'PhoenixWing 9-60GF', code:'BX-23', series:'BX · Starter', year:'2023', pub:'tt', img:'BX-23_PhoenixWing.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Dec 2023. Replaced DranSword as top Attack pick.'},
+    {id:'bx23h', name:'Soar Phoenix 9-60GF', code:'BX-23 (Hasbro)', series:'BX · Starter', year:'2024', pub:'hasbro', img:'BX-23_PhoenixWing.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro western name: Soar Phoenix.'},
+    {id:'bx24r', name:'WyvernGale 5-80GB', code:'BX-24 RB Vol.2', series:'BX · Random Booster', year:'2023', pub:'tt', img:'BX-24_WyvernGale.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.2. Dec 2023.'},
+    {id:'bx26', name:'UnicornSting 5-60GP', code:'BX-26', series:'BX · Booster', year:'2024', pub:'tt', img:'BX-26_UnicornSting.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Jan 2024'},
+    {id:'bx27r', name:'SphinxCowl 9-80GN', code:'BX-27 RB Select', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-27_SphinxCowl.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from SphinxCowl Select. Feb 2024.'},
+    {id:'bx31r', name:'TyrannoBeat 4-70Q', code:'BX-31 RB Vol.3', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-31_TyrannoBeat.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.3. Apr 2024.'},
+    {id:'bx31rh', name:'Beat Tyranno 4-70Q', code:'BX-31 (Hasbro)', series:'BX · Random Booster', year:'2024', pub:'hasbro', img:'BX-31_TyrannoBeat.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Wave release.'},
+    {id:'bx33', name:'WeissTiger 3-60U', code:'BX-33', series:'BX · Booster', year:'2024', pub:'tt', img:'BX-33_WeissTiger.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Jun 2024'},
+    {id:'bx34', name:'CobaltDragoon 2-60C', code:'BX-34', series:'BX · Starter', year:'2024', pub:'tt', img:'BX-34_CobaltDragoon.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Jul 2024'},
+    {id:'bx35r', name:'BlackShell 4-60D', code:'BX-35 RB Vol.4', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-35_BlackShell.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.4. Jul 2024.'},
+    {id:'bx36r', name:'WhaleWave 5-80E', code:'BX-36 RB Select', series:'BX · Random Booster', year:'2024', pub:'tt', img:'BX-36_WhaleWave.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from WhaleWave Select. Sep 2024.'},
+    {id:'bx37', name:'BearScratch 5-60F', code:'BX-37 Double Xtreme Set', series:'BX · Set', year:'2024', pub:'tt', img:'BX-34_CobaltDragoon.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2024'},
+    {id:'bx38', name:'CrimsonGaruda 4-70TP', code:'BX-38', series:'BX · Booster', year:'2024', pub:'tt', img:'BX-38_CrimsonGaruda.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024'},
+    // ─── UX LINE ───
+    {id:'ux01', name:'DranBuster 1-60A', code:'UX-01', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-01_DranBuster.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First UX release. Mar 2024.'},
+    {id:'ux01h', name:'Buster Dran 1-60A', code:'UX-01 (Hasbro)', series:'UX · Starter', year:'2024', pub:'hasbro', img:'UX-01_DranBuster.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Buster Dran.'},
+    {id:'ux02', name:'HellsHammer 3-70H', code:'UX-02', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-02_HellsHammer.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
+    {id:'ux03', name:'WizardRod 5-70DB', code:'UX-03', series:'UX · Booster', year:'2024', pub:'tt', img:'UX-03_WizardRod.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024. Best stamina Blade at release.'},
+    {id:'ux03h', name:'Wand Wizard 5-70DB', code:'UX-03 (Hasbro)', series:'UX · Booster', year:'2025', pub:'hasbro', img:'UX-03_WizardRod.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro name: Wand Wizard.'},
+    {id:'ux05r', name:'ShinobiShadow 1-80MN', code:'UX-05 RB Select', series:'UX · Random Booster', year:'2024', pub:'tt', img:'UX-05_ShinobiShadow.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from ShinobiShadow Select. May 2024.'},
+    {id:'ux06', name:'LeonCrest 7-60GN', code:'UX-06', series:'UX · Booster', year:'2024', pub:'tt', img:'UX-06_LeonCrest.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Aug 2024'},
+    {id:'ux08', name:'SilverWolf 3-80FB', code:'UX-08', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-08_SilverWolf.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Oct 2024'},
+    {id:'ux09', name:'SamuraiSaber 2-70L', code:'UX-09', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-09_SamuraiSaber.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024'},
+    {id:'ux09h', name:'Steel Samurai 4-80T', code:'UX-09 (Hasbro)', series:'UX · Booster', year:'2025', pub:'hasbro', img:'UX-09_SamuraiSaber.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro Wave 2025.'},
+    {id:'ux10', name:'KnightMail 3-85BS', code:'UX-10 Customize Set', series:'UX · Set', year:'2024', pub:'tt', img:'UX-10_KnightMail.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Nov 2024 w/ PteraSwing'},
+    {id:'ux11', name:'ImpactDrake 9-60LR', code:'UX-11', series:'UX · Starter', year:'2024', pub:'tt', img:'UX-11_ImpactDrake.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Dec 2024'},
+    {id:'ux12r', name:'GhostCircle 0-80GB', code:'UX-12 RB Vol.5', series:'UX · Random Booster', year:'2024', pub:'tt', img:'UX-12_GhostCircle.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare from Random Booster Vol.5. Dec 2024.'},
+    // ─── Hasbro-exclusive / Wave items ───
+    {id:'hbx_gw', name:'GaleWyvern 3-60T', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-24_WyvernGale.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Wave release.'},
+    {id:'hbx_sd', name:'Sword Dran 3-80B', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'BX-01_DranSword.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Wave. Dual Pack with Gale Wyvern.'},
+    {id:'hbx_ks', name:'KnifeShinobi 4-80HN', code:'Hasbro Wave 2025', series:'BX · Hasbro Wave', year:'2025', pub:'hasbro', img:'UX-05_ShinobiShadow.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro 2025 Dual Pack.'},
+    // ─── Rare / Exclusives ───
+    {id:'bxg01', name:'DranzerSpiral 3-80T', code:'BXG-01', series:'BX · Exclusive Booster', year:'2023', pub:'tt', img:'BXG-01_DranzerSpiral.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Exclusive Booster. Jul 2023 launch event.'},
+    {id:'bxg04', name:'DrigerSlash 4-80P', code:'BXG-04', series:'BX · Exclusive Booster', year:'2024', pub:'tt', img:'BXG-04_DrigerSlash.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Exclusive. Apr 2024.'},
+    {id:'bxg06', name:'SharkEdge 5-60GF Metal Coat: Blue', code:'BXG-06', series:'BX · Exclusive', year:'2024', pub:'tt', img:'BXG-04_DrigerSlash.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'B4 Store Exclusive. Mar 2024.'},
+    {id:'bxg07', name:'LightningL-Drago 1-60F', code:'BXG-07 RB', series:'BX · Random Booster Exclusive', year:'2024', pub:'tt', img:'BXG-07_LightningLDrago.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Sep 2024. Classic character Blade.'},
+    {id:'bxg09', name:'DranDagger 2-80GP Metal Coat: Black', code:'BXG-09 Giants Ver.', series:'BX · Exclusive', year:'2024', pub:'tt', img:'BX-20_DranDagger.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'B4 Store / GIANTS STORE Exclusive. Aug 2024.'},
+    {id:'bxg11', name:'DracielShield 7-60D', code:'BXG-11', series:'BX · Exclusive Booster', year:'2024', pub:'tt', img:'BXG-11_DracielShield.jpg', rare:true, excl:true, tourn:false, ltd:false, mc:false, owned:false, notes:'Classic character Blade. Dec 2024.'},
+    {id:'bxg14', name:'CobaltDragoon 2-60F Metal Coat: Black', code:'BXG-14 CoroFes', series:'BX · Exclusive', year:'2024', pub:'tt', img:'BX-34_CobaltDragoon.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'CoroFes Exclusive. Aug 2024.'},
+    {id:'bxg15', name:'DranzerSpiral 3-80T Black Ver.', code:'BXG-15', series:'BX · Exclusive', year:'2024', pub:'tt', img:'BXG-01_DranzerSpiral.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:false, owned:false, notes:'Beyblade Bar Exclusive from Aug 2024. Rare Bey Get Battle Oct–Dec 2024.'},
+    {id:'bxg32', name:'MammothTusk 2-80E Metal Coat: Black', code:'BXG-32', series:'BX · Exclusive', year:'2024', pub:'tt', img:'BXG-32_MammothTusk.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Shibuya Beyblade Park Exclusive. Dec 2024.'},
+    {id:'bxg_fc1', name:'DranBuster 1-60A Metal Coat: Blue FC Barcelona Ver.', code:'UX-00 BXG-17', series:'UX · Exclusive', year:'2025', pub:'tt', img:'UX-01_DranBuster.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'B4 Store Exclusive FC Barcelona collab. Jan 2025.'},
+    {id:'bxg_coro1', name:'PhoenixFeather Blade', code:'CoroCoro Jan.2024', series:'BX · CoroCoro Exclusive', year:'2024', pub:'tt', img:'CoroCoro_PhoenixFeather.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:false, owned:false, notes:'Free gift in CoroCoro Comic January 2024.'},
+    {id:'bxg_coro2', name:'HellsScythe 3-80F SP X', code:'CoroCoro Feb.2024', series:'BX · CoroCoro Exclusive', year:'2024', pub:'tt', img:'BX-02_HellsScythe.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:false, owned:false, notes:'Mail order CoroCoro Comic February 2024.'},
+    {id:'bxg_coro3', name:'DranBuster 1-60A Metal Coat: Red', code:'CoroCoro May.2024 Lottery', series:'BX · CoroCoro Exclusive', year:'2024', pub:'tt', img:'UX-01_DranBuster.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'CoroCoro Lottery prize. May 2024.'},
+    {id:'bxg_coro4', name:'DranSword Metal Coat: Blue', code:'CoroCoro Jul.2024', series:'BX · CoroCoro Exclusive', year:'2024', pub:'tt', img:'BX-01_DranSword.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Free gift CoroCoro Comic July 2024.'},
+    {id:'bxg_coro5', name:'PhoenixWing 9-80DB Metal Coat: Navy', code:'CoroCoro Sep.2024', series:'BX · CoroCoro Exclusive', year:'2024', pub:'tt', img:'BX-23_PhoenixWing.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Mail order CoroCoro Comic September 2024.'},
+    // Tournament Prizes
+    {id:'g1_1', name:'DranSword 3-60F Metal Coat: Gold', code:'G1 Prize — 1st', series:'BX · Tournament Prize', year:'2023', pub:'tt', img:'BX-01_DranSword.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:true, owned:false, notes:'G1 Tournament 1st place prize. Dec 2023.'},
+    {id:'g1_2', name:'DranSword 3-60F Metal Coat: Silver', code:'G1 Prize — 2nd', series:'BX · Tournament Prize', year:'2023', pub:'tt', img:'BX-01_DranSword.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:true, owned:false, notes:'G1 Tournament 2nd place prize. Dec 2023.'},
+    {id:'g1_3', name:'DranSword 3-60F Metal Coat: Bronze', code:'G1 Prize — 3rd', series:'BX · Tournament Prize', year:'2023', pub:'tt', img:'BX-01_DranSword.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:true, owned:false, notes:'G1 Tournament 3rd place prize. Dec 2023.'},
+    {id:'g3_1', name:'KnightShield Metal Coat: Gold', code:'G3 Prize — 1st (S1)', series:'BX · Tournament Prize', year:'2023', pub:'tt', img:'BX-04_KnightShield.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:true, owned:false, notes:'G3 Tournament 1st place. Jul 2023 – May 2024.'},
+    {id:'g3_4', name:'WizardRod Metal Coat: Gold', code:'G3 Prize — 1st (S2)', series:'BX · Tournament Prize', year:'2024', pub:'tt', img:'UX-03_WizardRod.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:true, owned:false, notes:'G3 Tournament 1st place. Jun 2024 – Mar 2025.'},
+    {id:'xone_1', name:'ShinobiKnife 4-60LF Metal Coat: Blue', code:'XONE Game Exclusive', series:'BX · Video Game Exclusive', year:'2024', pub:'tt', img:'UX-05_ShinobiShadow.jpg', rare:true, excl:true, tourn:false, ltd:true, mc:true, owned:false, notes:'Beyblade X XONE video game exclusive. Nov 2024.'},
+  ],
+  burst: [
+    {id:'bb01', name:'Valkyrie 6 Variable', code:'B-00', series:'Burst', year:'2015', pub:'tt', img:'Burst_Valkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'First Burst release.'},
+    {id:'bb02', name:'Valtryek V2 6V145', code:'B-60', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_UltimateValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb03', name:'Spriggan Requiem 0 Zeta', code:'B-100', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_BraveValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Fan favourite Stamina/Balance'},
+    {id:'bb04', name:'Cho-Z Achilles 00 Dimension', code:'B-127', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Burst_ZestAchilles.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb05', name:'Winning Valkyrie 12 Volcanic', code:'B-104', series:'Burst Turbo', year:'2018', pub:'tt', img:'Burst_UltimateValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb06', name:'Zillion Zeutron I.W.', code:'B-59', series:'Burst', year:'2016', pub:'tt', img:'Burst_DynamiteBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Stamina Starter'},
+    {id:'bb07', name:'Master Diabolos Generate', code:'B-155', series:'Burst GT', year:'2019', pub:'tt', img:'Burst_DivineBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb08', name:'Brave Valkyrie Evolution', code:'B-186', series:'Burst Dynamite Battle', year:'2021', pub:'tt', img:'Burst_BraveValkyrie.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb09', name:'Astral Spriggan Over Quattro', code:'B-195', series:'Burst QuadDrive', year:'2022', pub:'tt', img:'Burst_AstralSpriggan2.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'bb10', name:'Hells Salamander Over Quattro', code:'B-199', series:'Burst QuadStrike', year:'2023', pub:'tt', img:'Burst_DivineBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Final Burst series release.'},
+    {id:'bb11', name:'Xcalius X2 Magnum Impact', code:'B-62', series:'Burst Evolution', year:'2017', pub:'hasbro', img:'Burst_ZestAchilles.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Hasbro only'},
+    {id:'bb12', name:'Death Quetzalcoatl 125RDF', code:'B-Special', series:'Burst / Metal cross', year:'2017', pub:'tt', img:'Burst_GatlingDragon.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare crossover design'},
+  ],
+  metal: [
+    {id:'mf01', name:'Storm Pegasus 105RF', code:'BB-28', series:'Metal Fusion', year:'2009', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Protagonist Bey — Gingka Hagane'},
+    {id:'mf02', name:'Lightning L-Drago 100HF', code:'BB-43', series:'Metal Fusion', year:'2009', pub:'tt', img:'Metal_LDrago.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Left-spin antagonist Bey — Ryuga'},
+    {id:'mf03', name:'Earth Eagle 145WD', code:'BB-47', series:'Metal Fusion', year:'2009', pub:'tt', img:'Metal_EarthEagle.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Top stamina combo of the era'},
+    {id:'mf04', name:'Galaxy Pegasus W105R2F', code:'BB-70', series:'Metal Masters', year:'2010', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'mf05', name:'Meteo L-Drago LW105LF', code:'BB-88', series:'Metal Masters', year:'2010', pub:'tt', img:'Metal_LDrago.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Left-spin absorb system'},
+    {id:'mf06', name:'Ray Unicorno D125CS', code:'BB-71', series:'Metal Masters', year:'2010', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'mf07', name:'Big Bang Pegasus F:D', code:'BB-105', series:'Metal Fury', year:'2011', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'4D System'},
+    {id:'mf08', name:'Twisted Tempo 145WD', code:'BB-104', series:'Metal Fury', year:'2011', pub:'tt', img:'Metal_StormPegasus.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare and highly sought. Banned in many formats.'},
+    {id:'mf09', name:'Variares D:D', code:'BB-122', series:'Metal Fury', year:'2012', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Dual-spin 4D Bey'},
+    {id:'mf10', name:'Diablo Nemesis X:D', code:'BB-122', series:'Metal Fury', year:'2012', pub:'tt', img:'Metal_LDrago.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Final boss Bey of Metal Fury. Very rare.'},
+    {id:'mf11', name:'Jade Jupiter S130RB', code:'BB-116', series:'Metal Fury', year:'2011', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'4D System Balance'},
+    {id:'mf12', name:'Samurai Ifrit W145CF', code:'BBG-01', series:'Shogun Steel / Zero-G', year:'2012', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Zero-G system — Zyro protagonist Bey'},
+  ],
+  original: [
+    {id:'og01', name:'Dragoon S', code:'A-24', series:'Original Beyblade', year:'2001', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Protagonist Bey — Tyson Granger'},
+    {id:'og02', name:'Dranzer S', code:'A-26', series:'Original Beyblade', year:'2001', pub:'tt', img:'Metal_LDrago.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Kai Hiwatari'},
+    {id:'og03', name:'Driger S', code:'A-25', series:'Original Beyblade', year:'2001', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Ray Kon'},
+    {id:'og04', name:'Draciel S', code:'A-27', series:'Original Beyblade', year:'2001', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Max Tate'},
+    {id:'og05', name:'Wolborg 2', code:'A-72', series:'V-Force', year:'2002', pub:'tt', img:'Metal_StormPegasus.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rare. Hard to find in good condition.'},
+    {id:'og06', name:'Dragoon MS', code:'A-120', series:'G-Revolution', year:'2003', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'MagneSystem upgrade'},
+    {id:'og07', name:'Dranzer MS', code:'A-121', series:'G-Revolution', year:'2003', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'og08', name:'Master Dragoon G', code:'A-129', series:'G-Revolution', year:'2003', pub:'tt', img:'Metal_StormPegasus.jpg', rare:true, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Tournament exclusive era. Rare now.'},
+  ],
+  arenas: [
+    {id:'ar01', name:'Xtreme Stadium', code:'BX-10', series:'Beyblade X', year:'2023', pub:'tt', img:'Arena_XtremeStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Standard BeyX stadium with Xtreme rail.'},
+    {id:'ar01h', name:'Xtreme Stadium (Hasbro)', code:'BX-10 (Hasbro)', series:'Beyblade X', year:'2024', pub:'hasbro', img:'Arena_XtremeStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Same design, Hasbro western release.'},
+    {id:'ar02', name:'Wide Xtreme Stadium', code:'BX-32', series:'Beyblade X', year:'2024', pub:'tt', img:'BX-46_InfinityStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Wider arena for more intense battles. Jul 2024.'},
+    {id:'ar03', name:'Double Xtreme Stadium Set', code:'BX-37', series:'Beyblade X', year:'2024', pub:'tt', img:'BX-46_InfinityStadium.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Includes BearScratch 5-60F. Oct 2024.'},
+    {id:'ar04', name:'BeyStadium Burst Standard', code:'B-117', series:'Burst', year:'2018', pub:'tt', img:'Burst_DynamiteBelial.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'ar05', name:'BeyStadium GT', code:'B-149', series:'Burst GT', year:'2019', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'ar06', name:'Big Bang Pegasus Stadium', code:'BB-106', series:'Metal Fury', year:'2011', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'ar07', name:'Zero-G Stadium', code:'BBG-21', series:'Shogun Steel', year:'2012', pub:'tt', img:'Metal_StormPegasus.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Rotating gimmick arena.'},
+  ],
+  launchers: [
+    {id:'la01', name:'String Launcher', code:'BX-06 / BX-18', series:'Beyblade X', year:'2023', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Main BX launcher. Right spin only.'},
+    {id:'la01h', name:'String Launcher (Hasbro)', code:'BX-06 (Hasbro)', series:'Beyblade X', year:'2024', pub:'hasbro', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'la02', name:'String Launcher White Ver.', code:'BX-28', series:'Beyblade X', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
+    {id:'la03', name:'Custom Launcher Grip White Ver.', code:'BX-29', series:'Beyblade X', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
+    {id:'la04', name:'Custom Launcher Grip Red Ver.', code:'BX-30', series:'Beyblade X', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2024'},
+    {id:'la05', name:'String Launcher BX-00 Pink B4', code:'BX-00 B4 Pink', series:'Beyblade X · Limited', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:true, mc:false, owned:false, notes:'Limited edition B4 pink version.'},
+    {id:'la06', name:'String Launcher BX-00 Orange B4', code:'BX-00 B4 Orange', series:'Beyblade X · Limited', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:true, mc:false, owned:false, notes:'Limited edition B4 orange version.'},
+    {id:'la07', name:'String Launcher BX-00 Green B4', code:'BX-00 B4 Green', series:'Beyblade X · Limited', year:'2024', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:true, mc:false, owned:false, notes:'Limited edition B4 green version.'},
+    {id:'la08', name:'Rubber Custom Grip Gunmetal', code:'BX-41', series:'Beyblade X', year:'2025', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2025'},
+    {id:'la09', name:'Rubber Custom Grip Blue', code:'BX-42', series:'Beyblade X', year:'2025', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Mar 2025'},
+    {id:'la10', name:'Winder Ripcord Launcher Black×Green', code:'BX-46', series:'Beyblade X', year:'2025', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'la11', name:'String Launcher Gold Ver.', code:'G2 Prize — 1st', series:'BX · Tournament Prize', year:'2023', pub:'tt', img:'Launcher_String_BX18.jpg', rare:true, excl:false, tourn:true, ltd:true, mc:false, owned:false, notes:'G2 Tournament 1st place prize.'},
+    {id:'la12', name:'Launcher LR Burst', code:'B-119', series:'Burst', year:'2018', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:'Left/Right spin dual launcher.'},
+    {id:'la13', name:'God String Launcher', code:'B-92', series:'Burst Cho-Z', year:'2018', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'la14', name:'Metal Fight Launcher', code:'BB-55', series:'Metal Fusion', year:'2009', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+    {id:'la15', name:'Zero-G String Launcher', code:'BBG-07', series:'Shogun Steel', year:'2012', pub:'tt', img:'Launcher_String_BX18.jpg', rare:false, excl:false, tourn:false, ltd:false, mc:false, owned:false, notes:''},
+  ]
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let data = (() => { try { const s=localStorage.getItem('beyt'); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULTS)); } catch(e) { return JSON.parse(JSON.stringify(DEFAULTS)); } })();
+let filters = { x:{rare:false,owned:false,hasbro:false}, burst:{rare:false,owned:false}, metal:{rare:false,owned:false}, original:{rare:false,owned:false}, arenas:{owned:false}, launchers:{owned:false} };
+let modalSection = 'x';
+
+function save() { localStorage.setItem('beyt', JSON.stringify(data)); }
+
+// ============================================================
+// RENDER
+// ============================================================
+function badges(it) {
+  let h='';
+  if(it.rare) h+='<span class="badge rare">RARE</span>';
+  if(it.mc) h+='<span class="badge mc">METAL COAT</span>';
+  if(it.tourn) h+='<span class="badge tourn">PRIZE</span>';
+  if(it.excl) h+='<span class="badge excl">EXCLUSIVE</span>';
+  if(it.ltd) h+='<span class="badge ltd">LIMITED</span>';
+  if(it.pub==='hasbro') h+='<span class="badge hasbro">HASBRO</span>';
+  else if(it.pub==='tt') h+='<span class="badge tt">TT</span>';
+  else h+='<span class="badge tt">TT</span><span class="badge hasbro">HASBRO</span>';
+  return h;
+}
+
+function cardImg(it, sec) {
+  if(it.img) {
+    return `<div class="card-img"><img src="imgs/${it.img}" alt="${it.name}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${EMOJIS[sec]||'🌀'}</span>'"></div>`;
+  }
+  return `<div class="card-img"><span class="no-img">${EMOJIS[sec]||'🌀'}</span></div>`;
+}
+
+function render(sec) {
+  const arr = data[sec]||[];
+  const q = (document.getElementById('q-'+sec)||{value:''}).value.toLowerCase();
+  const f = filters[sec]||{};
+  let items = arr.filter(it => {
+    if(q && !((it.name+it.code+it.series).toLowerCase().includes(q))) return false;
+    if(f.rare && !it.rare) return false;
+    if(f.owned && !it.owned) return false;
+    if(f.hasbro && it.pub!=='hasbro') return false;
+    return true;
+  });
+
+  const total=arr.length, owned=arr.filter(i=>i.owned).length;
+  const pct = total>0 ? Math.round(owned/total*100) : 0;
+  const pf=document.getElementById('p-'+sec), pt=document.getElementById('pt-'+sec);
+  if(pf) pf.style.width=pct+'%';
+  if(pt) pt.textContent=owned+' / '+total;
+
+  const g=document.getElementById('grid-'+sec);
+  if(!items.length) {
+    g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ico">🌀</div><p>No items found. Add your first one!</p></div>';
+    updateStats(); return;
+  }
+  g.innerHTML = items.map(it=>`
+    <div class="card ${it.owned?'owned':''} ${it.rare?'rare-item':''}" id="c-${it.id}">
+      <button class="del-btn" onclick="delItem('${sec}','${it.id}',event)">✕</button>
+      ${cardImg(it,sec)}
+      <div class="card-top">
+        <div style="flex:1;min-width:0"></div>
+        <div class="badges">${badges(it)}</div>
+      </div>
+      <div class="cname">${it.name}</div>
+      <div class="ccode">${it.code||'—'}</div>
+      <div class="cmeta">
+        ${it.series?`<span class="mtag">${it.series}</span>`:''}
+        ${it.year?`<span class="mtag">${it.year}</span>`:''}
+      </div>
+      ${it.notes?`<div class="cnotes">${it.notes}</div>`:''}
+      <button class="own-btn ${it.owned?'yes':'no'}" onclick="toggleOwned('${sec}','${it.id}')">
+        ${it.owned?'✓ OWNED':'+ MARK AS OWNED'}
+      </button>
+    </div>
+  `).join('');
+  updateStats();
+}
+
+function updateStats() {
+  let total=0,owned=0,rare=0;
+  Object.values(data).forEach(arr=>arr.forEach(it=>{ total++; if(it.owned)owned++; if(it.rare)rare++; }));
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-owned').textContent=owned;
+  document.getElementById('s-rare').textContent=rare;
+  document.getElementById('s-pct').textContent=total>0?Math.round(owned/total*100)+'%':'0%';
+}
+
+function renderAll() { ['x','burst','metal','original','arenas','launchers'].forEach(render); }
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function toggleOwned(sec,id) {
+  const it=data[sec].find(i=>i.id===id);
+  if(it){it.owned=!it.owned; save(); render(sec);}
+}
+function delItem(sec,id,e) {
+  e.stopPropagation();
+  if(!confirm('Remove this item from your collection?')) return;
+  data[sec]=data[sec].filter(i=>i.id!==id); save(); render(sec);
+}
+function tf(type,sec) {
+  filters[sec][type]=!filters[sec][type];
+  const btn=document.getElementById('f-'+type+'-'+sec);
+  if(btn) btn.classList.toggle('on',filters[sec][type]);
+  render(sec);
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+const TAB_CLASS = {x:'ax',burst:'ab',metal:'am',original:'ao',arenas:'aa',launchers:'al'};
+function sw(sec) {
+  ['x','burst','metal','original','arenas','launchers'].forEach(s=>{
+    document.getElementById('panel-'+s).classList.toggle('on',s===sec);
+    const t=document.getElementById('tab-'+s);
+    t.className='tab'; if(s===sec) t.classList.add(TAB_CLASS[s]);
+  });
+  render(sec);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function om(sec) {
+  modalSection=sec;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('m-title').textContent='ADD ITEM — '+sec.toUpperCase();
+  ['m-name','m-code','m-series','m-year','m-img','m-notes'].forEach(id=>document.getElementById(id).value='');
+  ['m-rare','m-excl','m-tourn','m-ltd','m-mc','m-owned'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('m-pub').value='tt';
+}
+function cm() { document.getElementById('overlay').classList.remove('open'); }
+function si() {
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){alert('Name is required.');return;}
+  const item={
+    id:modalSection+'_'+Date.now(),
+    name, code:document.getElementById('m-code').value.trim(),
+    series:document.getElementById('m-series').value.trim(),
+    year:document.getElementById('m-year').value.trim(),
+    pub:document.getElementById('m-pub').value,
+    img:document.getElementById('m-img').value.trim(),
+    rare:document.getElementById('m-rare').checked,
+    excl:document.getElementById('m-excl').checked,
+    tourn:document.getElementById('m-tourn').checked,
+    ltd:document.getElementById('m-ltd').checked,
+    mc:document.getElementById('m-mc').checked,
+    owned:document.getElementById('m-owned').checked,
+    notes:document.getElementById('m-notes').value.trim()
+  };
+  if(!data[modalSection]) data[modalSection]=[];
+  data[modalSection].push(item); save(); render(modalSection); cm();
+}
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)cm();});
+
+// ============================================================
+// INIT
+// ============================================================
+renderAll();
+sw('x');
+</script>
+</body>
+</html>
