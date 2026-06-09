@@ -18,7 +18,7 @@
     --accent-original: #8b5cf6;
     --accent-rare: #ffd700;
     --text: #dde8f8;
-    --text-dim: #4a6080;
+    --text-dim: #7a9abf;
     --green: #22c55e;
     --red: #ef4444;
   }
@@ -330,7 +330,7 @@
     margin-top:auto; flex-shrink:0;
   }
   .own-btn.no {
-    background:var(--bg3); color:var(--text-dim);
+    background:var(--bg3); color:#8aaac8;
     border:1px solid var(--border);
   }
   .own-btn.no:hover { background:rgba(34,197,94,.08); border-color:var(--green); color:var(--green); }
@@ -418,6 +418,80 @@
   ::-webkit-scrollbar { width:5px; height:5px; }
   ::-webkit-scrollbar-track { background:var(--bg2); }
   ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* ── LIGHTBOX ── */
+  .lb-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.88);
+    backdrop-filter:blur(8px);
+    z-index:500;
+    align-items:center; justify-content:center;
+    animation:lb-in .15s ease;
+  }
+  .lb-overlay.open { display:flex; }
+  @keyframes lb-in {
+    from { opacity:0; }
+    to   { opacity:1; }
+  }
+  .lb-box {
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+    max-width:min(560px, 92vw);
+    animation:lb-scale .15s ease;
+  }
+  @keyframes lb-scale {
+    from { transform:scale(.92); opacity:0; }
+    to   { transform:scale(1);   opacity:1; }
+  }
+  .lb-img-wrap {
+    width:100%; max-height:60vh;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:10px 10px 0 0;
+    padding:24px;
+    overflow:hidden;
+  }
+  .lb-img-wrap img {
+    max-width:100%; max-height:56vh;
+    object-fit:contain;
+    filter:drop-shadow(0 4px 24px rgba(0,0,0,.7));
+  }
+  .lb-info {
+    width:100%;
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-top:none;
+    border-radius:0 0 10px 10px;
+    padding:14px 18px;
+  }
+  .lb-name {
+    font-family:'Orbitron',monospace;
+    font-size:14px; font-weight:700;
+    color:var(--accent-x);
+    margin-bottom:4px;
+    text-shadow:0 0 12px rgba(0,212,255,.3);
+  }
+  .lb-code {
+    font-size:13px; color:#9ab8d8;
+    letter-spacing:.5px; margin-bottom:6px;
+  }
+  .lb-notes {
+    font-size:12px; color:#8aaac8;
+    line-height:1.5;
+  }
+  .lb-close {
+    position:absolute; top:-14px; right:-14px;
+    width:30px; height:30px;
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:#8aaac8;
+    font-size:14px; transition:all .15s;
+    z-index:10;
+  }
+  .lb-close:hover { background:var(--border); color:var(--text); }
+  .card-img { cursor:zoom-in; }
 </style>
 </head>
 <body>
@@ -578,6 +652,22 @@
 </div>
 
 </main>
+
+
+<!-- LIGHTBOX -->
+<div class="lb-overlay" id="lb-overlay" onclick="lbClose(event)">
+  <div class="lb-box" id="lb-box">
+    <button class="lb-close" onclick="closeLb()">✕</button>
+    <div class="lb-img-wrap">
+      <img id="lb-img" src="" alt="">
+    </div>
+    <div class="lb-info">
+      <div class="lb-name" id="lb-name"></div>
+      <div class="lb-code" id="lb-code"></div>
+      <div class="lb-notes" id="lb-notes"></div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL -->
 <div class="overlay" id="overlay">
@@ -856,15 +946,47 @@ function badges(it) {
 }
 
 function cardImg(it, sec) {
+  const esc = (s) => (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   if(it.img) {
-    return `<div class="card-img"><img src="imgs/${it.img}" alt="${it.name}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${EMOJIS[sec]||'🌀'}</span>'"></div>`;
+    return `<div class="card-img" onclick="openLb('${esc(it.img)}','${esc(it.name)}','${esc(it.code)}','${esc(it.notes)}')"><img src="imgs/${it.img}" alt="${it.name}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${EMOJIS[sec]||'🌀'}</span>';this.parentElement.style.cursor='default'"></div>`;
   }
-  return `<div class="card-img"><span class="no-img">${EMOJIS[sec]||'🌀'}</span></div>`;
+  return `<div class="card-img" style="cursor:default"><span class="no-img">${EMOJIS[sec]||'🌀'}</span></div>`;
 }
+
+// ── Wave helpers (defined once, outside render) ──
+function getWave(it) {
+  const parts = (it.series||'').split(' · ');
+  return parts.length >= 2 ? parts[1] : (it.series||'—');
+}
+function waveSepClass(sec) {
+  return {x:'sx',burst:'sb',metal:'sm',original:'so',arenas:'sx',launchers:'sx'}[sec]||'sx';
+}
+const WAVE_LABELS = {
+  'W1':'WAVE 1 — Launch (Jul 2023)',
+  'W2':'WAVE 2 — Aug–Nov 2023',
+  'W3':'WAVE 3 — Dec 2023',
+  'W4':'WAVE 4 — Jan–Mar 2024',
+  'W5':'WAVE 5 — UX Launch (Mar–May 2024)',
+  'W6':'WAVE 6 — Jun–Jul 2024',
+  'W7':'WAVE 7 — Aug–Sep 2024',
+  'W8':'WAVE 8 — Oct–Dec 2024',
+  'W9':'WAVE 9 — CX Launch (Jan–Mar 2025)',
+  'W10':'WAVE 10 — Apr–May 2025',
+  'W11':'WAVE 11 — Jun–Aug 2025',
+  'W12':'WAVE 12 — Sep–Nov 2025',
+  'W13':'WAVE 13 — Dec 2025–2026',
+  'Exclusive':'EXCLUSIVES & EVENTS',
+  'Exclusive Booster':'EXCLUSIVE BOOSTERS',
+  'Random Booster Exclusive':'EXCLUSIVE RANDOM BOOSTERS',
+  'Tournament Prize':'TOURNAMENT PRIZES',
+  'Hasbro':'HASBRO WESTERN RELEASES',
+};
+function waveLabel(wave) { return WAVE_LABELS[wave] || wave.toUpperCase(); }
 
 function render(sec) {
   const arr = data[sec]||[];
-  const q = (document.getElementById('q-'+sec)||{value:''}).value.toLowerCase();
+  const qEl = document.getElementById('q-'+sec);
+  const q = qEl ? qEl.value.toLowerCase() : '';
   const f = filters[sec]||{};
   let items = arr.filter(it => {
     if(q && !((it.name+it.code+it.series).toLowerCase().includes(q))) return false;
@@ -881,51 +1003,21 @@ function render(sec) {
   if(pt) pt.textContent=owned+' / '+total;
 
   const g=document.getElementById('grid-'+sec);
+  if(!g) return;
+
   if(!items.length) {
     g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ico">🌀</div><p>No items found. Add your first one!</p></div>';
     updateStats(); return;
   }
-  // Group items by wave (second segment of series field, e.g. 'W3' or 'Exclusive')
-  function getWave(it) {
-    const parts = (it.series||'').split(' · ');
-    return parts.length >= 2 ? parts[1] : (it.series||'—');
-  }
-  function waveSepClass(sec) {
-    return {x:'sx',burst:'sb',metal:'sm',original:'so',arenas:'sx',launchers:'sx'}[sec]||'sx';
-  }
-  function waveLabel(wave, sec) {
-    const MAP = {
-      'W1':'WAVE 1 — Launch (Jul 2023)',
-      'W2':'WAVE 2 — Aug–Nov 2023',
-      'W3':'WAVE 3 — Dec 2023',
-      'W4':'WAVE 4 — Jan–Mar 2024',
-      'W5':'WAVE 5 — UX Launch (Mar–May 2024)',
-      'W6':'WAVE 6 — Jun–Jul 2024',
-      'W7':'WAVE 7 — Aug–Sep 2024',
-      'W8':'WAVE 8 — Oct–Dec 2024',
-      'W9':'WAVE 9 — CX Launch (Jan–Mar 2025)',
-      'W10':'WAVE 10 — Apr–May 2025',
-      'W11':'WAVE 11 — Jun–Aug 2025',
-      'W12':'WAVE 12 — Sep–Nov 2025',
-      'W13':'WAVE 13 — Dec 2025–2026',
-      'Exclusive':'EXCLUSIVES & EVENTS',
-      'Exclusive Booster':'EXCLUSIVE BOOSTERS',
-      'Random Booster Exclusive':'EXCLUSIVE RANDOM BOOSTERS',
-      'Tournament Prize':'TOURNAMENT PRIZES',
-      'Hasbro':'HASBRO WESTERN RELEASES',
-    };
-    return MAP[wave] || wave.toUpperCase();
-  }
+
   let lastWave = null;
   const parts = [];
   items.forEach(it => {
     const wave = getWave(it);
     if (wave !== lastWave) {
-      const cls = (wave.startsWith('Exclusive') || wave === 'Tournament Prize' || wave === 'Random Booster Exclusive') ? 'excl' : waveSepClass(sec);
-      parts.push(`<div class="wave-sep ${cls}" style="display:none" data-wave="${wave}">
-        <span class="wave-label">${waveLabel(wave,sec)}</span>
-        <span class="wave-line"></span>
-      </div>`);
+      const isExcl = wave.startsWith('Exclusive') || wave === 'Tournament Prize' || wave === 'Random Booster Exclusive';
+      const cls = isExcl ? 'excl' : waveSepClass(sec);
+      parts.push(`<div class="wave-sep ${cls}" data-wave="${wave}"><span class="wave-label">${waveLabel(wave)}</span><span class="wave-line"></span></div>`);
       lastWave = wave;
     }
     parts.push(`
@@ -945,10 +1037,7 @@ function render(sec) {
       </button>
     </div>`);
   });
-  // After building, show wave seps that have at least one visible sibling card
   g.innerHTML = parts.join('');
-  // Make wave separators visible (they start hidden to prevent flash)
-  g.querySelectorAll('.wave-sep').forEach(sep => { sep.style.display = 'flex'; });
   updateStats();
 }
 
@@ -1028,7 +1117,27 @@ function si() {
   if(!data[modalSection]) data[modalSection]=[];
   data[modalSection].push(item); save(); render(modalSection); cm();
 }
-document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)cm();});
+const _ov=document.getElementById('overlay'); if(_ov) _ov.addEventListener('click',function(e){if(e.target===this)cm();});
+
+
+// ============================================================
+// LIGHTBOX
+// ============================================================
+function openLb(imgSrc, name, code, notes) {
+  const el = document.getElementById('lb-overlay');
+  document.getElementById('lb-img').src = imgSrc ? 'imgs/' + imgSrc : '';
+  document.getElementById('lb-name').textContent = name || '';
+  document.getElementById('lb-code').textContent = code || '';
+  document.getElementById('lb-notes').textContent = notes || '';
+  el.classList.add('open');
+}
+function closeLb() {
+  document.getElementById('lb-overlay').classList.remove('open');
+}
+function lbClose(e) {
+  if (e.target === document.getElementById('lb-overlay')) closeLb();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
 
 // ============================================================
 // IMPORT / EXPORT
